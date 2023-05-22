@@ -4,7 +4,7 @@ import {AxiosRequestConfig} from "axios";
 
 class SecurityServ {
     request: Request;
-    tokenPrefix = "Bearer "
+    tokenPrefix = "bearer "
     authorizationKey = "Authorization"
 
     constructor() {
@@ -25,7 +25,7 @@ class SecurityServ {
     }
 
     async authPost<D>(url: string, data?: D, config?: AxiosRequestConfig) {
-        return await this.request.post<D>(url, data, this.createAuthHeader(config))
+         await this.request.post<D>(url, data, this.createAuthHeader(config))
     }
 
     async authGet(url: string, config?: AxiosRequestConfig) {
@@ -33,7 +33,7 @@ class SecurityServ {
     }
 
     async getToken() {
-        return "123456"
+        return localStorage.getItem("token")
     }
 }
 

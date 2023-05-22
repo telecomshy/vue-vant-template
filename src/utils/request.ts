@@ -1,10 +1,5 @@
 import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
 
-interface ApiError {
-    code: number,
-    message: string
-}
-
 const baseURL = import.meta.env.VITE_BASE_URL
 const timeout = 3000
 
@@ -19,35 +14,19 @@ export default class Request {
         })
     }
 
-    normalizeError(error: any): ApiError {
-        if (error.response) {
-            const {status, statusText, data} = error.response
-
-            let message
-
-            if (status === 422) {
-                message = "数据验证失败"
-            } else if (status === 500) {
-                message = "服务器内部错误"
-            } else {
-                message = data.detail ?? statusText
-            }
-
-            return {code: 2, message}
-
-        } else if (error.request) {
-            return {code: 1, message: "网络连接失败或服务器内部错误"}
-        } else {
-            return {code: 1, message: "请求构建失败"}
-        }
-    }
-
-    async request(config: AxiosRequestConfig): Promise<[ApiError] | [undefined, any]> {
+    async request(config: AxiosRequestConfig): Promise<[undefined, any] | [{ code: string, message: string }]> {
         try {
             const response = await this.$axios.request(config)
-            return [undefined, response.data]
+
+            const {success, code, message, data} = response.data
+
+            if (success) {
+                return [undefined, data]
+            } else {
+                return [{code, message}]
+            }
         } catch (error) {
-            return [this.normalizeError(error)]
+            return [{code: "ERR_999", message: "网络或服务器内部错误"}]
         }
     }
 
