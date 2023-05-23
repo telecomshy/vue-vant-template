@@ -3,7 +3,7 @@ import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
 const baseURL = import.meta.env.VITE_BASE_URL
 const timeout = 3000
 
-export default class Request {
+class Request {
     $axios: AxiosInstance
 
     constructor() {
@@ -39,3 +39,6 @@ export default class Request {
     }
 }
 
+const request = new Request()
+
+export {request, Request}
