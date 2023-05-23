@@ -5,11 +5,14 @@
 
 <script setup lang="ts">
 import {onMounted} from "vue";
-import securityServ from "@/service/securityServ";
+import {request} from "@/utils/request"
 
 onMounted(async () => {
-  console.log("start")
-  const [error, data] = await securityServ.authGet("/login")
-  console.log(data)
+  try {
+    const data = await request.get("/user")
+    console.log("in app try: ", data)
+  }catch(error){
+    console.log("in app catch: ", error)
+  }
 })
 </script>

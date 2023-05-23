@@ -1,6 +1,7 @@
 import {request} from '@/utils/request';
 import {AxiosRequestConfig} from "axios";
 import {RouteRecordRaw, useRouter} from "vue-router";
+import {ServiceError} from "@/types/apitypes";
 
 
 const tokenPrefix = "bearer "
@@ -27,26 +28,29 @@ function createAuthHeader(config?: RequestConfig) {
 }
 
 
-async function handleTokenExpired(target: Function) {
-    return async function (...args: any[]) {
-
-        const [error, data] = await target(...args)
-        // 如果token过期则跳转到首页
-        if (error.code === "ERR_006") {
-            await router.push({name: 'login'})
-        }
-        return [error, data]
+async function handleTokenExpired(error: ServiceError) {
+    // 如果token过期则跳转到首页
+    if (error.code === "ERR_006") {
+        await router.push({name: 'login'})
     }
 }
 
 async function authPost<D>(url: string, data?: D, config?: RequestConfig) {
-    return await request.post<D>(url, data, createAuthHeader(config))
+    try {
+        return await request.post<D>(url, data, createAuthHeader(config))
+    } catch (error) {
+        await handleTokenExpired(error as ServiceError)
+        return Promise.reject(error)
+    }
 }
 
-const authPostAPI = handleTokenExpired(authPost)
-
 async function authGet(url: string, config?: RequestConfig) {
-    return await request.get(url, createAuthHeader(config))
+    try {
+        return await request.get(url, createAuthHeader(config))
+    } catch (error) {
+        await handleTokenExpired(error as ServiceError)
+        return Promise.reject(error)
+    }
 }
 
 function getToken() {
@@ -57,20 +61,45 @@ function setToken(token: string) {
     localStorage.setItem("token", token)
 }
 
-async function login({username, password, uuid, captcha}) {
+function removeToken() {
+    localStorage.removeItem("token")
+}
 
+interface LoginData {
+    username: string,
+    password: string,
+    uuid: string,
+    captcha: string
+}
+
+async function login(loginData: LoginData) {
+    try {
+        const token = await request.post("/login", loginData)
+        setToken(token)
+    } catch (error) {
+        return Promise.reject(error)
+    }
 }
 
 
 async function logout() {
-
+    removeToken()
+    await router.push({name: "login"})
 }
 
-function getCaptcha() {
-
+async function getCaptcha(uuid: string) {
+    try {
+        const blob = await request.get("/captcha", {
+            params: {uuid},
+            responseType: "blob"
+        })
+        return URL.createObjectURL(blob)
+    } catch (error) {
+        return Promise.reject(error)
+    }
 }
 
 
 export default function useSecurity() {
-    return {login, logout, authGet, authPostAPI}
+    return {login, logout, authGet, authPost, getCaptcha}
 }

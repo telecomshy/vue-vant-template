@@ -14,28 +14,36 @@ class Request {
         })
     }
 
-    async request(config: AxiosRequestConfig): Promise<[undefined, any] | [{ code: string, message: string }]> {
+    async request(config: AxiosRequestConfig) {
         try {
             const response = await this.$axios.request(config)
 
             const {success, code, message, data} = response.data
 
             if (success) {
-                return [undefined, data]
+                return Promise.resolve(data)
             } else {
-                return [{code, message}]
+                return Promise.reject({code, message})
             }
         } catch (error) {
-            return [{code: "ERR_999", message: "网络或服务器内部错误"}]
+            // TODO 弹窗显示系统错误
         }
     }
 
     async get(url: string, config?: AxiosRequestConfig) {
-        return await this.request(Object.assign(config ?? {}, {url, method: 'get'}))
+        try {
+            return await this.request(Object.assign(config ?? {}, {url, method: 'get'}))
+        } catch (error) {
+            return Promise.reject(error)
+        }
     }
 
     async post<D>(url: string, data?: D, config?: AxiosRequestConfig) {
-        return await this.request(Object.assign(config ?? {}, {url, data, method: 'post'}))
+        try {
+            return await this.request(Object.assign(config ?? {}, {url, data, method: 'post'}))
+        } catch (error) {
+            return Promise.reject(error)
+        }
     }
 }
 
