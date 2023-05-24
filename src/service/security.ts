@@ -13,6 +13,7 @@ interface RequestConfig extends AxiosRequestConfig {
     redirectRoute?: RouteRecordRaw  // 如果出现token过期错误，跳转页面
 }
 
+
 function createAuthHeader(config?: RequestConfig) {
 
     const token = tokenPrefix + getToken()
@@ -99,7 +100,10 @@ async function getCaptcha(uuid: string) {
     }
 }
 
+function isLogin() {
+    return !!getToken();
+}
 
 export default function useSecurity() {
-    return {login, logout, authGet, authPost, getCaptcha}
+    return {login, logout, authGet, authPost, getCaptcha, isLogin}
 }
